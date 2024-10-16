@@ -1,5 +1,6 @@
 package com.example.rest_android;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -37,13 +38,6 @@ public class MainActivity extends AppCompatActivity {
         // 加载所有曲目
         loadTracks();
 
-        trackAdapter = new TrackAdapter(trackList, track -> {
-            // 点击曲目，编辑曲目
-            Intent intent = new Intent(MainActivity.this, EditTrackActivity.class);
-            intent.putExtra("track_id", track.getId());
-            startActivity(intent);
-        });
-        recyclerView.setAdapter(trackAdapter);
 
         // 添加新曲目
         Button addTrackButton = findViewById(R.id.addTrackButton);
@@ -58,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadTracks() {
         apiService.getTracks().enqueue(new Callback<List<Track>>() {
+
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> response) {
                 if (response.isSuccessful()) {

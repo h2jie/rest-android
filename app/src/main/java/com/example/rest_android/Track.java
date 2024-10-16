@@ -8,7 +8,6 @@ public class Track {
 
     public Track(String id, String title, String singer) {
         if (id == null || id.isEmpty()) {
-            // 如果 id 为空，生成一个随机的 UUID
             this.id = UUID.randomUUID().toString();
         } else {
             this.id = id;
