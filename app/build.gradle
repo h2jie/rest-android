@@ -29,6 +29,8 @@ android {
 }
 
 dependencies {
+
+    implementation libs.swiperefreshlayout
     implementation libs.retrofit
     implementation libs.converter.gson
     implementation libs.recyclerview

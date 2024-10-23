@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -23,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private TrackAdapter trackAdapter;
     private List<Track> trackList = new ArrayList<>();
     private TrackApiService apiService;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private Button addButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,25 +34,37 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 初始化 Retrofit 客户端
         apiService = RetrofitClient.getClient().create(TrackApiService.class);
 
-        // 加载所有曲目
+        // Create adapter
+        trackAdapter = new TrackAdapter(trackList,this);
+
+        // Assign adapter to recyclerview
+        recyclerView.setAdapter(trackAdapter);
+
         loadTracks();
 
+        addButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, EditTrackActivity.class);
+            intent.putExtra("track_adapter",(ArrayList<Track>) trackList); // 传递适配器
+            startActivity(intent);
+        });
 
-        // 添加新曲目
         Button addTrackButton = findViewById(R.id.addTrackButton);
         addTrackButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AddTrackActivity.class);
             startActivity(intent);
+            //trackAdapter.notifyDataSetChanged();
         });
 
-        // 实现左滑删除
+
         setupSwipeToDelete();
     }
+
+
 
     private void loadTracks() {
         apiService.getTracks().enqueue(new Callback<List<Track>>() {
@@ -56,9 +72,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Track>> call, Response<List<Track>> response) {
                 if (response.isSuccessful()) {
-                    trackList.clear();
+                    List<Track> tracks = response.body();
                     trackList.addAll(response.body());
                     trackAdapter.notifyDataSetChanged();
+
                 } else {
                     Log.e("MainActivity", "Error: " + response.code() + " " + response.message());
                 }
@@ -84,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
                 int position = viewHolder.getAdapterPosition();
                 Track track = trackList.get(position);
 
-                // 删除 Track
+                // delete Track
                 apiService.deleteTrack(track.getId()).enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
@@ -96,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onFailure(Call<Void> call, Throwable t) {
-                        // 处理错误
+                        // infor error
                     }
                 });
             }
@@ -105,4 +122,6 @@ public class MainActivity extends AppCompatActivity {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+
+
 }
