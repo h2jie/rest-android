@@ -1,48 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="6dip">
+    android:background="?attr/selectableItemBackground"
+    android:padding="12dp">
 
     <TextView
         android:id="@+id/trackId"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="6dp"
-        android:text="TrackId" />
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/trackTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/trackId"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="6dp"
-        android:layout_marginTop="5dp"
-        android:text="track Title" />
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/trackId"/>
 
     <TextView
         android:id="@+id/trackSinger"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/trackTitle"
-        android:layout_alignParentStart="true"
-        android:layout_marginStart="6dp"
-        android:layout_marginTop="7dp"
-        android:text="TextView" />
+        android:textSize="14sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/trackTitle"/>
 
-    <Button
-        android:id="@+id/btnView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="219dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginEnd="31dp"
-        android:layout_marginBottom="6dp"
-        android:text="Ver" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

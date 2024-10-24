@@ -16,7 +16,6 @@ public class Track {
         this.singer = singer;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }

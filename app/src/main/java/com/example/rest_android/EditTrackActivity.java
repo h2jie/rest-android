@@ -2,12 +2,17 @@ package com.example.rest_android;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,114 +24,115 @@ public class EditTrackActivity extends AppCompatActivity {
     private EditText titleEditText, singerEditText;
     private Button saveButton, deleteButton;
     private String trackId;
-    private List<Track> trackList;
-    private TrackAdapter trackAdapter; // 添加适配器引用
+    private TrackApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_track);
-        trackList = (ArrayList<Track>) getIntent().getSerializableExtra("track_list");
-        trackAdapter = new TrackAdapter(trackList, this);
+
+        initViews();
+        getIntentData();
+        setupListeners();
+    }
+
+    private void initViews() {
         titleEditText = findViewById(R.id.titleET);
         singerEditText = findViewById(R.id.singerET);
         saveButton = findViewById(R.id.saveBtn);
         deleteButton = findViewById(R.id.deleteBtn);
-
-        trackId = getIntent().getStringExtra("track_id");
-        //trackAdapter = (TrackAdapter) getIntent().getSerializableExtra("track_adapter"); // 获取适配器
-
-        loadTrackById(trackId);
-
-        saveButton.setOnClickListener(v -> updateTrack());
-        deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog(trackId));
+        apiService = TrackService.getApi();
     }
 
-    private void loadTrackById(String trackId) {
-        TrackApiService apiService = RetrofitClient.getClient().create(TrackApiService.class);
-        apiService.getTracks().enqueue(new Callback<List<Track>>() {
-            @Override
-            public void onResponse(Call<List<Track>> call, Response<List<Track>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    for (Track track : response.body()) {
-                        if (track.getId().equals(trackId)) {
-                            titleEditText.setText(track.getTitle());
-                            singerEditText.setText(track.getSinger());
-                            break;
-                        }
-                    }
-                }
-            }
+    private void getIntentData() {
+        Intent intent = getIntent();
+        if (intent != null) {
+            trackId = intent.getStringExtra("track_id");
+            String title = intent.getStringExtra("track_title");
+            String singer = intent.getStringExtra("track_singer");
 
-            @Override
-            public void onFailure(Call<List<Track>> call, Throwable t) {
-                // 处理错误
-            }
-        });
+            titleEditText.setText(title);
+            singerEditText.setText(singer);
+        }
+    }
+
+    private void setupListeners() {
+        saveButton.setOnClickListener(v -> updateTrack());
+        deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog());
     }
 
     private void updateTrack() {
-        Track track = new Track(trackId, titleEditText.getText().toString(), singerEditText.getText().toString());
-        TrackApiService apiService = RetrofitClient.getClient().create(TrackApiService.class);
-        apiService.addTrack(track).enqueue(new Callback<Track>() { // 这里应该是 Callback<Track>
-            @Override
-            public void onResponse(Call<Track> call, Response<Track> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    // 处理成功响应，例如更新适配器中的曲目
-                    int position = findTrackPositionById(trackId);
-                    if (position != -1) {
-                        trackList.set(position, response.body()); // 更新适配器中的曲目
-                        trackAdapter.notifyItemChanged(position); // 刷新适配器中的项
-                    }
-                    finish(); // 关闭编辑界面
-                }
-            }
+        String title = titleEditText.getText().toString().trim();
+        String singer = singerEditText.getText().toString().trim();
 
-            @Override
-            public void onFailure(Call<Track> call, Throwable t) {
-                // 处理错误
-            }
-        });
-    }
+        if (title.isEmpty() || singer.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        Track track = new Track(trackId, title, singer);  // id设为null，因为它会在URL中传递
 
-    private void showDeleteConfirmationDialog(String trackId) {
-        new AlertDialog.Builder(this)
-                .setTitle("Delete Track")
-                .setMessage("Are you sure you want to delete this track?")
-                .setPositiveButton(android.R.string.yes, (dialog, which) -> deleteTrack(trackId))
-                .setNegativeButton(android.R.string.no, null)
-                .show();
-    }
+        Log.d("EditTrackActivity", "Updating track with ID: " + trackId);
+        Log.d("EditTrackActivity", "Title: " + title);
+        Log.d("EditTrackActivity", "Singer: " + singer);
 
-    private void deleteTrack(String trackId) {
-        TrackApiService apiService = RetrofitClient.getClient().create(TrackApiService.class);
-        apiService.deleteTrack(trackId).enqueue(new Callback<Void>() {
+        apiService.updateTrack(track).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
+                Log.d("EditTrackActivity", "Response code: " + response.code());
                 if (response.isSuccessful()) {
-                    // 从适配器中删除曲目
-                    int position = findTrackPositionById(trackId);
-                    trackAdapter.removeTrack(position);
+                    Toast.makeText(EditTrackActivity.this, "Track updated successfully", Toast.LENGTH_SHORT).show();
                     finish();
+                } else {
+                    try {
+                        if (response.errorBody() != null) {
+                            String errorBody = response.errorBody().string();
+                            Log.e("EditTrackActivity", "Error body: " + errorBody);
+                            Toast.makeText(EditTrackActivity.this,
+                                    "Failed to update track: " + errorBody, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Toast.makeText(EditTrackActivity.this,
+                                "Error processing response", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                // 处理错误
+                Log.e("EditTrackActivity", "Network error: " + t.getMessage());
+                t.printStackTrace();
+                Toast.makeText(EditTrackActivity.this,
+                        "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Track")
+                .setMessage("Are you sure you want to delete this track?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteTrack())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
-
-    private int findTrackPositionById(String trackId) {
-        for (int i = 0; i < trackAdapter.getItemCount(); i++) {
-            Track track = trackAdapter.trackList.get(i); // 访问适配器的曲目列表
-            if (track.getId().equals(trackId)) {
-                return i; // 返回找到的曲目位置
+    private void deleteTrack() {
+        apiService.deleteTrack(trackId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(EditTrackActivity.this, "Track deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(EditTrackActivity.this, "Failed to delete track", Toast.LENGTH_SHORT).show();
+                }
             }
-        }
-        return -1; // 如果没有找到，返回 -1
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(EditTrackActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

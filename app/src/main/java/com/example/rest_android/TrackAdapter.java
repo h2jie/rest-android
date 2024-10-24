@@ -12,13 +12,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
-
 public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHolder> {
-    public List<Track> trackList;
+    private List<Track> trackList;
     private Context context;
 
-
-    public TrackAdapter(List<Track> trackList,Context context) {
+    public TrackAdapter(List<Track> trackList, Context context) {
         this.trackList = trackList;
         this.context = context;
     }
@@ -26,37 +24,23 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
     @NonNull
     @Override
     public TrackViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_track, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_track, parent, false);
         return new TrackViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull TrackViewHolder holder, int position) {
         Track track = trackList.get(position);
-        holder.idTextView.setText(track.getId());
-        holder.titleTextView.setText(track.getTitle());
-        holder.singerTextView.setText(track.getSinger());
+        holder.bind(track);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, EditTrackActivity.class); // 使用 context
+            Intent intent = new Intent(context, EditTrackActivity.class);
             intent.putExtra("track_id", track.getId());
-            // 如果需要传递其他数据，可以在这里添加
-            context.startActivity(intent); // 启动 EditTrackActivity
+            intent.putExtra("track_title", track.getTitle());
+            intent.putExtra("track_singer", track.getSinger());
+            context.startActivity(intent);
         });
-    }
-
-
-    public void updateTracks(List<Track> newTracks) {
-        trackList.clear();
-        trackList.addAll(newTracks);
-        notifyDataSetChanged();
-    }
-
-    public void removeTrack(int position) {
-        if (position >= 0 && position < trackList.size()) {
-            trackList.remove(position);
-            notifyItemRemoved(position);
-        }
     }
 
     @Override
@@ -64,16 +48,32 @@ public class TrackAdapter extends RecyclerView.Adapter<TrackAdapter.TrackViewHol
         return trackList.size();
     }
 
-    public static class TrackViewHolder extends RecyclerView.ViewHolder {
-        TextView idTextView, titleTextView, singerTextView;
-        Button editButton;
+    public Track getTrackAt(int position) {
+        return trackList.get(position);
+    }
 
-        public TrackViewHolder(@NonNull View itemView) {
+    public void updateTracks(List<Track> newTracks) {
+        trackList.clear();
+        trackList.addAll(newTracks);
+        notifyDataSetChanged();
+    }
+
+    static class TrackViewHolder extends RecyclerView.ViewHolder {
+        TextView idTextView, titleTextView, singerTextView;
+        Button viewButton;
+
+        TrackViewHolder(@NonNull View itemView) {
             super(itemView);
             idTextView = itemView.findViewById(R.id.trackId);
             titleTextView = itemView.findViewById(R.id.trackTitle);
             singerTextView = itemView.findViewById(R.id.trackSinger);
-            editButton = itemView.findViewById(R.id.btnView);
+
+        }
+
+        void bind(Track track) {
+            idTextView.setText(track.getId());
+            titleTextView.setText(track.getTitle());
+            singerTextView.setText(track.getSinger());
         }
     }
 }
